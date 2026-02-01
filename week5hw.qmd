@@ -1,0 +1,113 @@
+---
+title: "hypothesis1Project"
+format: 
+  html:
+    self_contained: true
+    toc: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false 
+  error: false
+editor: visual
+author: Abir Rached
+date: Feb 2026
+---
+
+# Introduction:
+
+Moral decision-making is often studied as a balance between intuitive responses and more reflective reasoning. Large-scale experimental datasets, such as the *Moral Machine* study on autonomous vehicle dilemmas, offer a unique opportunity to examine systematic patterns in moral choices across a wide range of contexts. In these scenarios, individuals are repeatedly asked to choose between alternative outcomes involving moral trade-offs, allowing researchers to observe whether choices follow stable distributions or vary depending on situational framing. One important but less explored aspect of such decisions is the role of default options, which are known in other domains of decision-making to exert a strong influence on individual choices.
+
+The present study investigates whether individuals systematically favor default options in moral choice tasks and whether this pattern varies by moral context. Specifically, we test two hypotheses: (1) that choice distributions differ significantly between default and non-default options, reflecting a default bias in moral decision-making, and (2) that this distributional pattern persists across different moral contexts involving moral dilemmas.
+
+# Hypothesis:
+
+**H1:** Choice distributions differ significantly between default and non-default options.
+
+**H2:** This distributional difference persists across moral contexts.
+
+# Descriptive statistics:
+
+## hypothesis testing
+
+```{r}
+library(readr)
+SharedResponses <- read_csv("Desktop/M1 S2/DAT505/project 1/Research-Report-1/SharedResponses.csv")
+View(SharedResponses)
+spec(SharedResponsesFullFirstSessions)
+```
+
+First I'll group the data so that I have one observation per moral dilemma
+
+```{r}
+library(dplyr)
+
+scenario_data <- SharedResponse %>%
+  group_by(ResponseID, ExtendedSessionID, UserID, ScenarioTypeStrict, ScenarioType) %>%
+  filter(n() == 2) %>%   # ensure complete scenarios
+  summarise(
+    # which outcome was chosen
+    chosen_intervention = Intervention[Saved == 1],
+    default_is_omission = DefaultChoiceIsOmission[Saved == 1],
+    .groups = "drop"
+  ) %>%
+  mutate(
+    choice_type = case_when(
+      chosen_intervention == 0 & default_is_omission == 1 ~ "default",
+      chosen_intervention == 1 & default_is_omission == 0 ~ "default",
+      TRUE ~ "non_default"
+    )
+  )
+```
+
+```{r}
+h1_dist <- scenario_data %>%
+  count(choice_type) %>%
+  mutate(proportion = n / sum(n))
+
+h1_dist
+```
+
+```{r}
+h1_table <- table(scenario_data$choice_type)
+
+chisq.test(h1_table)
+```
+
+Independence test results will either support my hypothesis or not
+
+```{r}
+h2_dist <- scenario_data %>%
+  filter(!is.na(ScenarioTypeStrict)) %>%
+  count(ScenarioTypeStrict, choice_type) %>%
+  group_by(ScenarioTypeStrict) %>%
+  mutate(proportion = n / sum(n))
+
+h2_dist
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(h2_dist, aes(x = choice_type, y = proportion)) +
+  geom_col() +
+  facet_wrap(~ ScenarioTypeStrict) +
+  labs(
+    title = "Default vs Non-default Choices Across Moral Contexts",
+    x = "Choice Type",
+    y = "Proportion"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+h2_table <- table(
+  scenario_data$ScenarioTypeStrict,
+  scenario_data$choice_type
+)
+
+chisq.test(h2_table)
+```
+
+Independence test to support or not my hypothesis
