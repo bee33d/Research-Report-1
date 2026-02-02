@@ -1,0 +1,38 @@
+---
+title: "Week5ReportUpdate"
+format: 
+  html:
+    self_contained: true
+    toc: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false 
+  error: false
+editor: visual
+author: Abir Rached
+date: Feb 2026
+---
+
+# Introduction:
+
+Moral decision-making is often studied as a balance between intuitive responses and more reflective reasoning. Large-scale experimental datasets, such as the *Moral Machine* study on autonomous vehicle dilemmas, offer a unique opportunity to examine systematic patterns in moral choices across a wide range of contexts. In these scenarios, individuals are repeatedly asked to choose between alternative outcomes involving moral trade-offs, allowing researchers to observe whether choices follow stable distributions or vary depending on situational framing. One important but less explored aspect of such decisions is the role of default options, which are known in other domains of decision-making to exert a strong influence on individual choices.
+
+The present study investigates whether individuals systematically favor default options in moral choice tasks and whether this pattern varies by moral context. Specifically, we test two hypotheses: (1) that choice distributions differ significantly between default and non-default options, reflecting a default bias in moral decision-making, and (2) that this distributional pattern persists across different moral contexts involving moral dilemmas.
+
+# Hypothesis:
+
+**H1:** Choice distributions differ significantly between default and non-default options.
+
+**H2:** This distributional difference persists across moral contexts.
+
+# Updates and issues:
+
+In the process of trying to test my hypotheses, I ran into a couple of issues that I will describe in the following paragraphs.
+
+First of all, the datasets provided in the moral machine experiment used up a huge amount of storage. The first dataset, included responses from participants that withdrew or did not continue the full session, was of a size of 5,4 GB with more than 36 million observations. Having had issues with opening this dataset last week, I thought it would be wise to opt for the dataset including only respondents that completed the full session. I thought this would not cause any issues since my variables of interest, namely DefaultChoice and DefaultChoiceIsOmission, were still included in this dataset. Nonetheless, this dataset was also too large with a size of 4,82 GB.
+
+I was unable to import any of the datasets to R. At first, R would either crash or the process would seemingly go through without any object forming in my R environment. After a few more attempts of this, I started getting system notifications about having ran out of disk space. I would get an alert telling me to quit the applications that were in use, including R, if I wanted my system to continue running properly. Following this notification, I started removing some large files to free up some space. Nonetheless, this was not enough, to even open R. Then came a point where my whole laptop started crashing again, forcing me to quit all the applications.
+
+I do not have enough disk space to run any statistical tests. I am currently looking to get an external hard drive, as this seems to be the most suitable solution to be able to resume my work promptly.
