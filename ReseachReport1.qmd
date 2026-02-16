@@ -84,10 +84,118 @@ scenario_flagged <- scenario_data %>%
 ```
 
 ```{r}
-
+scenario_flagged <- scenario_flagged %>%
+  mutate(
+    cultural_context = trimws(cultural_context),
+    cultural_context = na_if(cultural_context, ""),       
+    cultural_context = na_if(cultural_context, "NA"),
+    cultural_context = na_if(cultural_context, "N/A")
+  ) %>%
+  filter(!is.na(cultural_context))
 ```
 
 ## Descriptive Statistics
+
+### Scenario level tests:
+
+```{r}
+scenario_desc <- scenario_flagged %>%
+  group_by(ScenarioTypeStrict) %>%
+  summarise(
+    n = n(),
+    prop_against = mean(against_majority, na.rm = TRUE),
+    divisiveness_index = 1 - 2 * abs(prop_against - 0.5), # 1=most divisive, 0=most consensual
+    .groups = "drop"
+  ) %>%
+  arrange(desc(divisiveness_index))
+```
+
+```{r}
+knitr::kable(scenario_desc, digits = 3, caption = "Scenario-type descriptives")
+```
+
+```{r}
+library(ggplot2)
+library(scales)
+
+ggplot(scenario_desc, aes(x = ScenarioTypeStrict, y = prop_against, fill = ScenarioTypeStrict)) +
+  geom_col(show.legend = FALSE) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    title = "H1: Deviation from global majority preferences across scenario types",
+    x = "Scenario type",
+    y = "Proportion against majority"
+  ) +
+  theme_minimal()
+```
+
+### Cultural context tests:
+
+```{r}
+country_data <- scenario_flagged %>%
+  group_by(UserCountry3, cultural_context) %>%
+  summarise(
+    n = n(),
+    prop_against = mean(against_majority, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(n >= 200)
+
+culture_desc <- country_data %>%
+  group_by(cultural_context) %>%
+  summarise(
+    n_countries = n(),
+    mean_prop_against = mean(prop_against, na.rm = TRUE),
+    sd_prop_against = sd(prop_against, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(mean_prop_against))
+```
+
+```{r}
+knitr::kable(culture_desc, digits = 3, caption = "Cultural-context descriptives")
+```
+
+```{r}
+ggplot(country_data, aes(x = reorder(cultural_context, prop_against, median), y = prop_against)) +
+  geom_boxplot(fill = "#41AE76", alpha = 0.85, outlier.alpha = 0.35) +
+  stat_summary(fun = mean, geom = "point", color = "black", size = 2) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    title = "H2: Deviation from majority by cultural context",
+    x = "Cultural context",
+    y = "Proportion against majority"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Interaction between cultural context and scenario type test:
+
+```{r}
+cell_data <- scenario_flagged %>%
+  group_by(UserCountry3, cultural_context, ScenarioTypeStrict) %>%
+  summarise(
+    n = n(),
+    prop_against = mean(against_majority, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(n >= 100)
+```
+
+```{r}
+ggplot(cell_data, aes(x = ScenarioTypeStrict, y = prop_against, color = cultural_context, group = cultural_context)) +
+  stat_summary(fun = mean, geom = "line", linewidth = 0.8, alpha = 0.8) +
+  stat_summary(fun = mean, geom = "point", size = 2, alpha = 0.9) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    title = "H3: Interaction between cultural context and scenario type",
+    x = "Scenario type",
+    y = "Proportion against majority",
+    color = "Cultural context"
+  ) +
+  theme_minimal()
+```
 
 ## Inferential Statistics
 
@@ -163,35 +271,7 @@ knitr::kable(h2_coefs, digits = 4, caption = "H2 linear model coefficients")
 knitr::kable(h2_glance, digits = 4, caption = "H2 model fit summary")
 ```
 
-```{r}
-library(ggplot2)
-library(scales)
-
-ggplot(country_data, aes(x = reorder(cultural_context, prop_against, median), y = prop_against)) +
-  geom_boxplot(fill = "#41AE76", alpha = 0.85, outlier.alpha = 0.35) +
-  stat_summary(fun = mean, geom = "point", color = "black", size = 2) +
-  scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  labs(
-    title = "H2: Deviation from majority by cultural context",
-    x = "Cultural context",
-    y = "Proportion against majority"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
 ### H3:
-
-```{r}
-cell_data <- scenario_flagged %>%
-  group_by(UserCountry3, cultural_context, ScenarioTypeStrict) %>%
-  summarise(
-    n = n(),
-    prop_against = mean(against_majority, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  filter(n >= 100)
-```
 
 ```{r}
 fit_h3_add <- lm(prop_against ~ cultural_context + ScenarioTypeStrict, data = cell_data, weights = n)
@@ -213,20 +293,6 @@ h3_glance <- broom::glance(fit_h3_int) %>%
 knitr::kable(h3_coefs, digits = 4, caption = "H3 interaction model coefficients")
 knitr::kable(h3_anova_compare, digits = 4, caption = "H3 ANOVA model comparison (additive vs interaction)")
 knitr::kable(h3_glance, digits = 4, caption = "H3 interaction model fit summary")
-```
-
-```{r}
-ggplot(cell_data, aes(x = ScenarioTypeStrict, y = prop_against, color = cultural_context, group = cultural_context)) +
-  stat_summary(fun = mean, geom = "line", linewidth = 0.8, alpha = 0.8) +
-  stat_summary(fun = mean, geom = "point", size = 2, alpha = 0.9) +
-  scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  labs(
-    title = "H3: Interaction between cultural context and scenario type",
-    x = "Scenario type",
-    y = "Proportion against majority",
-    color = "Cultural context"
-  ) +
-  theme_minimal()
 ```
 
 # Conclusion
