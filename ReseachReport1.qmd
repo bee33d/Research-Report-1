@@ -1,0 +1,89 @@
+---
+title: "Research Report 1"
+format: 
+  html:
+    self_contained: true
+    toc: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false 
+  error: false
+editor: visual
+author: "Rached Abir"
+date: Feb 2026
+---
+
+# Introduction
+
+Moral decision-making is often studied as a balance between intuitive responses and more reflective reasoning. Large-scale experimental datasets, such as the *Moral Machine* study on autonomous vehicle dilemmas, offer a unique opportunity to examine systematic patterns in moral choices across a wide range of contexts. In these scenarios, individuals are repeatedly asked to choose between alternative outcomes involving moral trade-offs, allowing researchers to observe whether choices follow stable distributions or vary depending on situational framing. One important but less explored aspect of such decisions is the role of default options, which are known in other domains of decision-making to exert a strong influence on individual choices.
+
+While global moral preferences show strong regularities in the Moral machine paper, I hypothesize that individuals vary in their propensity to deviate from these majority norms. More specifically, I hypothesize that it is related to cultural context rather than random choice.
+
+**H1:** Deviation from global majority moral preferences varies systematically across scenario types.
+
+**H2:** Deviation from global majority moral preferences is structured by cultural context.
+
+**H3:** The effect of cultural context on deviation from global majority moral preferences depends on scenario type.
+
+## Data Transformation
+
+To test my hypotheses I worked using the ShareResponsesFullFirstSession dataset
+
+library(vroom)
+
+df \<- vroom("SharedResponsesFullFirstSessions.csv", progress = TRUE)
+
+library(dplyr)
+
+set.seed(123)
+
+sampled_ids \<- df %\>% #distinct(ResponseID) %\>% #slice_sample(n = 50000)
+
+df_sample \<- df %\>% \# semi_join(sampled_ids, by = "ResponseID")
+
+df_sample %\>% count(ResponseID, UserID) %\>% count(n) %\>% print(n = 50)
+
+```{r}
+df <- readRDS("fullRsample.rds")
+```
+
+```{r}
+culture <- read.csv("cultures.csv")
+```
+
+```{r}
+library(dplyr)
+scenario_data <- df %>%
+  group_by(ResponseID, UserID, ScenarioTypeStrict,UserCountry3) %>%
+  filter(sum(Saved == 1, na.rm = TRUE) == 1) %>%  # exactly one chosen
+  summarise(
+    chosen_attribute = AttributeLevel[Saved == 1][1],
+    .groups = "drop"
+  )
+```
+
+```{r}
+scenario_flagged <- scenario_data %>%
+  inner_join(majority_map, by = "ScenarioTypeStrict") %>%
+  mutate(
+    against_majority = as.numeric(chosen_attribute != majority_attribute)
+  )
+against_majority_data <- scenario_flagged %>%
+  filter(against_majority == 1)
+
+scenario_flagged
+```
+
+Attributes such as gender or social status are omitted because their effects, while present, are weak, culturally variable, and lack a consistent global majority direction, unlike the core attributes retained in the table.
+
+```{r}
+
+```
+
+## Descriptive Statistics
+
+## Inferential Statistics
+
+# Conclusion
