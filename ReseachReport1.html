@@ -2548,7 +2548,7 @@ vertical-align: -.125em;
 </div>
 </div>
 </div>
-<p>This figure visually matches the descriptive table: the distribution of country-level deviation differs across cultural contexts, but overlap is substantial. In other words, context appears to matter, yet differences are moderate.</p>
+<p>This figure visually matches the descriptive table: the distribution of country-level deviation differs across cultural contexts, but differences are moderate.</p>
 </section>
 <section id="interaction-between-cultural-context-and-scenario-type-test-h3" class="level3">
 <h3 class="anchored" data-anchor-id="interaction-between-cultural-context-and-scenario-type-test-h3">Interaction between cultural context and scenario type test (H3):</h3>
@@ -3005,6 +3005,7 @@ vertical-align: -.125em;
 </div>
 </div>
 <p>With R² = 0.518 and Adj. R² = 0.371, cultural context explains a moderate share of cross-country variation in deviation. The gap between R² and adjusted R² suggests caution due to limited sample size (31 countries) relative to the number of levels.</p>
+<p>The intercept is 0.271, which is the estimated mean proportion of deviation from the global majority.</p>
 <p>Because the overall model is significant, I conclude that cultural context is associated with different average deviation levels. This supports <strong>H2</strong> at the model level.</p>
 <p>At the same time, not all pairwise context coefficients are significant (e.g., English, Islamic, Orthodox, SouthAsia), so the evidence suggests patterned but moderate cross-context differences rather than a sharp separation of all groups.</p>
 <div class="cell">
@@ -3062,7 +3063,7 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
-<p>In the same line of testing the model’s assumptions, the Shapiro-Wilk test assesses residual normality; the Breusch-Pagan test assesses homoskedasticity; and Cook’s distance checks whether a few countries dominate results. Taken together, The diagnostics indicate some heteroskedasticity (Breusch-Pagan p-value is below 0.05), so coefficient significance should be interpreted with heteroskedasticity-robust standard errors.</p>
+<p>In the same line of testing the model’s assumptions, the Shapiro-Wilk test assesses residual normality; the Breusch-Pagan test assesses homoskedasticity; and Cook’s distance checks whether a few countries dominate results. Because homoskedasticity was violated (Breusch-Pagan p &lt; .05), p-values from the linear model should be interpreted cautiously; results are treated as indicative rather than definitive.</p>
 </section>
 <section id="interaction-between-cultural-context-and-scenario-type-tests-h3" class="level3">
 <h3 class="anchored" data-anchor-id="interaction-between-cultural-context-and-scenario-type-tests-h3">Interaction between cultural context and scenario type tests (H3):</h3>
@@ -3414,7 +3415,7 @@ vertical-align: -.125em;
 </div>
 </div>
 <p>The ANOVA model comparison tests whether adding the interaction term improves fit beyond the additive model.</p>
-<p>The additive-versus-interaction comparison is significant (F = 3.0984, p = 0.001),, so adding <code>cultural_context × ScenarioTypeStrict</code> improves model fit. This supports <strong>H3</strong>: cultural differences are scenario-dependent, not constant across all dilemma types.</p>
+<p>The additive-versus-interaction comparison is significant (F = 3.0984, p = 0.001), so adding <code>cultural_context × ScenarioTypeStrict</code> improves model fit. This supports <strong>H3</strong>: cultural differences are scenario-dependent, not constant across all dilemma types.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h3_glance, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H3 interaction model fit summary&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
