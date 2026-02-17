@@ -17,9 +17,15 @@ date: Feb 2026
 
 # Introduction
 
-Moral decision-making is often studied as a balance between intuitive responses and more reflective reasoning. Large-scale experimental datasets, such as the *Moral Machine* study on autonomous vehicle dilemmas, offer a unique opportunity to examine systematic patterns in moral choices across a wide range of contexts. In these scenarios, individuals are repeatedly asked to choose between alternative outcomes involving moral trade-offs, allowing researchers to observe whether choices follow stable distributions or vary depending on situational framing. One important but less explored aspect of such decisions is the role of default options, which are known in other domains of decision-making to exert a strong influence on individual choices.
+Automated vehicles can face moral dilemmas too. At least the programmers of these latter do when deciding what a vehicle should do where harm cannot be avoided and one group must be prioritized over another. The Moral Machine project (Awad et al., 2018, Nature) collected large-scale responses to these dilemmas and showed two broad patterns: people share some common moral priorities, but preferences also differ across societies.
 
-While global moral preferences show strong regularities in the Moral machine paper, I hypothesize that individuals vary in their propensity to deviate from these majority norms. More specifically, I hypothesize that it is related to cultural context rather than random choice.
+The original study found strong regularities, such as preferring to save more lives, humans rather than animals, and younger rather than older people. At the same time, it identified meaningful cross-country variation and cultural clustering. This led me to wonder if deviation against the majority also follows these same trends. This makes the dataset useful for testing whether disagreement follows social patterns rather than pure randomness.
+
+In this report, I focus on **deviation from global majority preferences** as the outcome. I test whether deviation changes across scenario types (H1), across cultural contexts (H2), and whether cultural differences depend on scenario type (H3).
+
+These hypotheses are substantively important because they test more generally whether moral disagreement is structured by social context and dilemma content. If deviation is patterned rather than random, this has implications for how societies discuss fairness, risk, and responsibility in automated systems. In other words, the question is not only what people choose, but whether disagreement itself follows social regularities.
+
+## Hypotheses:
 
 **H1:** Deviation from global majority moral preferences varies systematically across scenario types.
 
@@ -27,23 +33,15 @@ While global moral preferences show strong regularities in the Moral machine pap
 
 **H3:** The effect of cultural context on deviation from global majority moral preferences depends on scenario type.
 
+# Hypothesis testing:
+
 ## Data Transformation
 
-To test my hypotheses I worked using the ShareResponsesFullFirstSession dataset
+To test my hypotheses I used the Moral Machine first-session response data and merged it with a country-to-cultural-context file.
 
-library(vroom)
+The transformation is done in three steps. First, I needed to filter observations so that they refered to the outcomes only. This is why I kept one observation per distinct respondent and scenario (`Saved == 1`), so each observation represents a clear decision. Second, I define a benchmark table (`majority_map`) that specifies the global-majority option for each scenario type used here (Age, Utilitarian, Species, Fitness). Third, I create a binary variable `against_majority` equal to 1 when the respondent’s choice differs from that benchmark and 0 otherwise.
 
-df \<- vroom("SharedResponsesFullFirstSessions.csv", progress = TRUE)
-
-library(dplyr)
-
-set.seed(123)
-
-sampled_ids \<- df %\>% #distinct(ResponseID) %\>% #slice_sample(n = 50000)
-
-df_sample \<- df %\>% \# semi_join(sampled_ids, by = "ResponseID")
-
-df_sample %\>% count(ResponseID, UserID) %\>% count(n) %\>% print(n = 50)
+I then merge country-level cultural context and remove missing context labels (including blank strings, in the case of one country). This produces a clean dataset where each row can be interpreted as: “in this scenario, this respondent either followed or deviated from the global majority preference.”
 
 ```{r}
 df <- readRDS("fullRsample.rds")
@@ -58,7 +56,7 @@ majority_map <- tibble::tibble(
   ScenarioTypeStrict = c("Age", "Utilitarian", "Species", "Fitness"),
   majority_attribute = c("Young", "More", "Hoomans", "Fit")
 )
-majority_map
+knitr::kable(majority_map, caption = "Global-majority benchmark used to define deviation")
 ```
 
 Attributes such as gender or social status are omitted because their effects, while present, are weak, culturally variable, and lack a consistent global majority direction, unlike the core attributes retained in the table.
@@ -96,7 +94,7 @@ scenario_flagged <- scenario_flagged %>%
 
 ## Descriptive Statistics
 
-### Scenario level tests:
+### Scenario level tests (H1):
 
 ```{r}
 scenario_desc <- scenario_flagged %>%
@@ -114,6 +112,8 @@ scenario_desc <- scenario_flagged %>%
 knitr::kable(scenario_desc, digits = 3, caption = "Scenario-type descriptives")
 ```
 
+Fitness is the most divisive scenario type (prop_against = 0.469, divisiveness_index = 0.937), meaning responses are close to a 50/50 split. Species is the least divisive (prop_against = 0.200, divisiveness_index = 0.399), indicating stronger consensus with the global majority. Age and Utilitarian are intermediate but still clearly less divisive than Fitness.
+
 ```{r}
 library(ggplot2)
 library(scales)
@@ -129,7 +129,9 @@ ggplot(scenario_desc, aes(x = ScenarioTypeStrict, y = prop_against, fill = Scena
   theme_minimal()
 ```
 
-### Cultural context tests:
+This graph further illustrates the distribution of against-majority answers, with species being the least divisive scenario type (20%), and fitness being the most divisive (46,9%). This shows us that there seems to be indeed variation in against-majority answers based on the scenario type.
+
+### Cultural context tests (H2):
 
 ```{r}
 country_data <- scenario_flagged %>%
@@ -156,6 +158,8 @@ culture_desc <- country_data %>%
 knitr::kable(culture_desc, digits = 3, caption = "Cultural-context descriptives")
 ```
 
+Average deviation rates vary across cultural contexts, from 0.230 (SouthAsia) to 0.327 (Confucian). However, some categories have only one country (Confucian, Islamic, SouthAsia), so their standard deviation is NA and those means should be interpreted cautiously. The categories with more countries (Catholic, Protestant, English) provide more stable descriptive estimates.
+
 ```{r}
 ggplot(country_data, aes(x = reorder(cultural_context, prop_against, median), y = prop_against)) +
   geom_boxplot(fill = "#41AE76", alpha = 0.85, outlier.alpha = 0.35) +
@@ -170,7 +174,9 @@ ggplot(country_data, aes(x = reorder(cultural_context, prop_against, median), y 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-### Interaction between cultural context and scenario type test:
+This figure visually matches the descriptive table: the distribution of country-level deviation differs across cultural contexts, but overlap is substantial. In other words, context appears to matter, yet differences are moderate.
+
+### Interaction between cultural context and scenario type test (H3):
 
 ```{r}
 cell_data <- scenario_flagged %>%
@@ -197,9 +203,19 @@ ggplot(cell_data, aes(x = ScenarioTypeStrict, y = prop_against, color = cultural
   theme_minimal()
 ```
 
+The non-parallel lines in this plot suggest a possible interaction: the size of scenario-type differences is not identical across cultural contexts. This is a descriptive signal that motivates the formal H3 interaction test.
+
+The descriptive statistics section suggests three patterns: scenario types differ in divisiveness, cultural groups differ in average deviation, and these differences may not be parallel across scenario types. I now test these formally with inferential statistics: a chi-square test for H1 (categorical association), a weighted linear model for H2 (country-level mean differences by cultural context), and an interaction model comparison for H3 (whether scenario effects vary by cultural context).
+
 ## Inferential Statistics
 
-### H1:
+I use three inferential tests because each hypothesis asks a different statistical question.
+
+-   **H1 (scenario type differences):** I use a **chi-square test of independence** because both variables are categorical (`ScenarioTypeStrict` and binary `against_majority`). This tests whether the distribution of deviation is the same across scenario types.
+-   **H2 (cultural context differences):** I use a **weighted linear model** at country level (`prop_against ~ cultural_context`, weights = `n`) because the outcome is a country-level proportion and countries contribute different sample sizes.
+-   **H3 (interaction):** I fit additive and interaction linear models and compare them with **ANOVA model comparison**. This directly tests whether adding `cultural_context × ScenarioTypeStrict` improves fit, which corresponds to the interaction hypothesis.
+
+### Scenario level tests (H1):
 
 ```{r}
 scenario_desc <- scenario_flagged %>%
@@ -213,10 +229,6 @@ scenario_desc <- scenario_flagged %>%
   arrange(desc(divisiveness_index))
 
 knitr::kable(scenario_desc, digits = 3, caption = "H1 descriptive: divisiveness by scenario type")
-```
-
-```{r}
-tab_h1 <- table(scenario_flagged$ScenarioTypeStrict, scenario_flagged$against_majority)
 ```
 
 ```{r}
@@ -235,11 +247,43 @@ h1_table <- as.data.frame.matrix(tab_h1)
 h1_table <- tibble::rownames_to_column(h1_table, var = "ScenarioTypeStrict")
 
 knitr::kable(h1_table, caption = "H1 contingency table: Scenario Type × Against Majority")
+```
 
+The contingency table shows clear differences in the share of against-majority choices by scenario type (for example, Fitness has far more “1” responses than Species)
+
+```{r}
 knitr::kable(h1_test, digits = 4, caption = "H1 inferential test: chi-square (Scenario Type × Against Majority)")
 ```
 
-### H2:
+The chi-square result is statistically significant (χ² = 1806.564, df = 3, p \< 2.2e-16) with a meaningful effect size (Cramer’s V = 0.2325), so we reject independence between scenario type and deviation. This supports **(H1)** that deviation from global majority preferences varies systematically across scenario types.
+
+Substantively, this means some dilemmas are more polarizing than others. In this dataset, `Fitness` is closest to a split opinion, while `Species` shows stronger consensus.
+
+Let us run some assumption checks for the model
+
+```{r}
+h1_assumptions <- tibble::tibble(
+  check = c("Minimum expected cell count", "Any expected count < 5?", "Any expected count < 1?"),
+  value = c(
+    round(min(chisq_h1$expected), 3),
+    ifelse(any(chisq_h1$expected < 5), "Yes", "No"),
+    ifelse(any(chisq_h1$expected < 1), "Yes", "No")
+  )
+)
+knitr::kable(h1_assumptions, digits = 4, caption = "H1 chi-square assumption checks")
+```
+
+The chi-square assumptions are satisfied. The minimum expected cell count is far above 5, and there are no expected counts below 5 or 1. Therefore, the chi-square approximation is appropriate and the H1 inference is valid.
+
+```{r}
+h1_stdres <- as.data.frame(chisq_h1$stdres)
+h1_stdres$ScenarioTypeStrict <- rownames(chisq_h1$stdres)
+knitr::kable(h1_stdres, digits = 3, caption = "H1 standardized residuals (cell-level deviations)")
+```
+
+Standardized residuals show which cells contribute most to the association. Larger absolute residuals (Fitness) indicate scenario-type/response combinations that occur more (or less) often than expected under independence.
+
+### Cultural context tests (H2):
 
 ```{r}
 country_data <- scenario_flagged %>%
@@ -251,6 +295,8 @@ country_data <- scenario_flagged %>%
   ) %>%
   filter(n >= 200)
 ```
+
+For H2, the model estimates how average country-level deviation changes across cultural contexts. The coefficient for each context is the difference from the omitted reference context. Using weights (`n`) gives more influence to estimates based on larger country samples.
 
 ```{r}
 fit_h2 <- lm(prop_against ~ cultural_context, data = country_data, weights = n)
@@ -268,10 +314,49 @@ h2_glance <- broom::glance(fit_h2) %>%
   )
 
 knitr::kable(h2_coefs, digits = 4, caption = "H2 linear model coefficients")
+```
+
+```{r}
 knitr::kable(h2_glance, digits = 4, caption = "H2 model fit summary")
 ```
 
-### H3:
+With R² = 0.518 and Adj. R² = 0.371, cultural context explains a moderate share of cross-country variation in deviation. The gap between R² and adjusted R² suggests caution due to limited sample size (31 countries) relative to the number of levels.
+
+Because the overall model is significant, I conclude that cultural context is associated with different average deviation levels. This supports **H2** at the model level.
+
+At the same time, not all pairwise context coefficients are significant (e.g., English, Islamic, Orthodox, SouthAsia), so the evidence suggests patterned but moderate cross-context differences rather than a sharp separation of all groups.
+
+```{r}
+# H2 diagnostics (linearity, normality, homoskedasticity, influence)
+par(mfrow = c(2,2))
+plot(fit_h2)
+par(mfrow = c(1,1))
+
+h2_diag <- tibble::tibble(
+  check = c(
+    "Shapiro-Wilk p-value (residual normality)",
+    "Breusch-Pagan p-value (homoskedasticity)",
+    "Max Cook's distance"
+  ),
+  value = c(
+    shapiro.test(rstandard(fit_h2))$p.value,
+    lmtest::bptest(fit_h2)$p.value,
+    max(cooks.distance(fit_h2))
+  )
+)
+```
+
+These diagnostics test whether linear-model assumptions are reasonable. The residual plots are used to inspect linearity and constant variance. The model is usable for inference, but interpretation remains cautious.
+
+```{r}
+knitr::kable(h2_diag, digits = 4, caption = "H2 linear-model diagnostics")
+```
+
+In the same line of testing the model's assumptions, the Shapiro-Wilk test assesses residual normality; the Breusch-Pagan test assesses homoskedasticity; and Cook’s distance checks whether a few countries dominate results. Taken together, The diagnostics indicate some heteroskedasticity (Breusch-Pagan p-value is below 0.05), so coefficient significance should be interpreted with heteroskedasticity-robust standard errors.
+
+### Interaction between cultural context and scenario type tests (H3):
+
+For H3, the key question is whether scenario-type differences are the same in every cultural context. The interaction model allows scenario effects to vary by context. The ANOVA comparison between additive and interaction models is the direct test of this hypothesis.
 
 ```{r}
 fit_h3_add <- lm(prop_against ~ cultural_context + ScenarioTypeStrict, data = cell_data, weights = n)
@@ -291,8 +376,56 @@ h3_glance <- broom::glance(fit_h3_int) %>%
   )
 
 knitr::kable(h3_coefs, digits = 4, caption = "H3 interaction model coefficients")
+```
+
+```{r}
 knitr::kable(h3_anova_compare, digits = 4, caption = "H3 ANOVA model comparison (additive vs interaction)")
+```
+
+The ANOVA model comparison tests whether adding the interaction term improves fit beyond the additive model.
+
+The additive-versus-interaction comparison is significant (F = 3.0984, p = 0.001),, so adding `cultural_context × ScenarioTypeStrict` improves model fit. This supports **H3**: cultural differences are scenario-dependent, not constant across all dilemma types.
+
+```{r}
 knitr::kable(h3_glance, digits = 4, caption = "H3 interaction model fit summary")
 ```
 
+The interaction model has very high fit (R² = 0.9711, Adj. R² = 0.9541, n = 74). This indicates strong explanatory power, but it also uses many parameters relative to observations. To avoid over-interpretation, I prioritize the joint interaction test and broad pattern interpretation.
+
+```{r}
+# H3 diagnostics
+par(mfrow = c(2,2))
+plot(fit_h3_int)
+par(mfrow = c(1,1))
+
+h3_diag <- tibble::tibble(
+  check = c(
+    "Shapiro-Wilk p-value (residual normality)",
+    "Breusch-Pagan p-value (homoskedasticity)",
+    "Max Cook's distance"
+  ),
+  value = c(
+    shapiro.test(rstandard(fit_h3_int))$p.value,
+    lmtest::bptest(fit_h3_int)$p.value,
+    max(cooks.distance(fit_h3_int))
+  )
+)
+
+knitr::kable(h3_diag, digits = 4, caption = "H3 interaction-model diagnostics")
+```
+
+The H3 diagnostics serve the same role as H2 diagnostics and suggest the model is informative but approximate. Given complexity and sample size, conclusions are strongest at the model-comparison level (interaction supported).
+
 # Conclusion
+
+This report tested whether deviation from global majority moral choices is structured by scenario type, cultural context, and their interaction.
+
+For H1, the chi-square test found a strong association between scenario type and against-majority responses (very small p-value, effectively p \< 0.001; non-trivial Cramer’s V). Practically, some dilemmas are much more divisive than others: in this sample, fitness scenarios are closest to split opinion, while species scenarios show stronger consensus.
+
+For H2, the weighted country-level linear model was significant overall (p = 0.010; R² ≈ 0.52). This means cultural context is associated with different average levels of deviation from global majority choices. Some contexts have higher or lower deviation, although not every pairwise contrast is statistically significant.
+
+For H3, the interaction model significantly improved fit over the additive model (ANOVA comparison p = 0.001). This means cultural differences are scenario-dependent rather than uniform across all dilemma types.
+
+Overall, the findings support all three hypotheses. The broader implication is that when it comes to moral deviation, both the type of moral dilemma and social context matter, and they matter together.
+
+Main limitations are (1) aggregation at country/context level may hide within-country variation, (2) some cultural categories contain few countries, and (3) linear-model assumptions are approximations for proportion outcomes. Future research should use individual-level multilevel models and include additional scenario dimensions to test robustness.
