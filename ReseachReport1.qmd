@@ -223,7 +223,7 @@ ggplot(cell_data, aes(x = ScenarioTypeStrict, y = prop_against, color = cultural
 
 The non-parallel lines in this plot suggest a possible interaction: the size of scenario-type differences is not identical across cultural contexts. This is a descriptive signal that motivates the formal H3 interaction test.
 
-The descriptive statistics section suggests three patterns: scenario types differ in divisiveness, cultural groups differ in average deviation, and these differences may not be parallel across scenario types. I now test these formally with inferential statistics: a chi-square test for H1 (categorical association), a weighted linear model for H2 (country-level mean differences by cultural context), and an interaction model comparison for H3 (whether scenario effects vary by cultural context).
+The descriptive statistics section suggests three patterns: scenario types differ in divisiveness, cultural groups differ in average deviation, and these differences may not be parallel across scenario types. I now test these formally with inferential statistics: a chi-square test for H1 (categorical association), a weighted ANOVA for H2 (country-level mean differences by cultural context), and an interaction model comparison for H3 (whether scenario effects vary by cultural context).
 
 ## Inferential Statistics
 
@@ -250,6 +250,8 @@ scenario_desc <- scenario_flagged %>%
 
 knitr::kable(scenario_desc, digits = 3, caption = "H1 descriptive: divisiveness by scenario type")
 ```
+
+I use a chi‑square test of independence because both variables are categorical: scenario type and a binary indicator of deviation. The test evaluates whether the distribution of “against majority” responses is the same across scenario types. If the distributions differ, it means scenario type is associated with deviation rates.
 
 ```{r}
 # H1 chi-square test of independence
@@ -318,7 +320,7 @@ country_data <- scenario_flagged %>%
   filter(n >= 200)
 ```
 
-For H2, I test whether the **mean** country-level deviation differs across cultural contexts. A one-way ANOVA answers this directly. I use weights (`n`) so that countries with larger samples contribute proportionally more information. I also set the reference level to "Catholic" so the intercept has a clear baseline interpretation.
+For H2, I test whether the **mean** country-level deviation differs across cultural contexts. A one-way ANOVA answers this directly because it is designed to test whether group means differ beyond what would be expected by chance. I use weights (`n`) so that countries with larger samples contribute proportionally more information.
 
 ```{r}
 fit_h2 <- lm(prop_against ~ cultural_context, data = country_data, weights = n)
@@ -394,7 +396,7 @@ In the same line of testing the ANOVA assumptions, the Shapiro–Wilk test asses
 
 ### Interaction between cultural context and scenario type tests (H3):
 
-For H3, the key question is whether scenario-type differences are the same in every cultural context. The interaction model allows scenario effects to vary by context. The ANOVA comparison between additive and interaction models is the direct test of this hypothesis.
+For H3, the key question is whether scenario-type differences are the same in every cultural context. The interaction model allows scenario effects to vary by context. The ANOVA comparison between additive and interaction models is the direct test of this hypothesis. If the interaction model fits significantly better, it supports the claim that cultural differences depend on scenario type.
 
 ```{r}
 fit_h3_add <- lm(prop_against ~ cultural_context + ScenarioTypeStrict, data = cell_data, weights = n)
