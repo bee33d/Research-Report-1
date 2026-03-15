@@ -2269,6 +2269,7 @@ vertical-align: -.125em;
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
 <p>Automated vehicles can face moral dilemmas too. At least the programmers of these latter do when deciding what a vehicle should do where harm cannot be avoided and one group must be prioritized over another. The Moral Machine project (Awad et al., 2018, Nature) collected large-scale responses to these dilemmas and showed two broad patterns: people share some common moral priorities, but preferences also differ across societies.</p>
+<p>To ensure a clearer understanding of my manipulations, let me start by explaining the design of the original study by Awad et al. The experiment varied nine moral factors across scenarios. Six factors related to the type of characters involved: age, gender, fitness, social status, species, and utilitarian. Each condition had two levels. The first compared people’s preferences between saving the young or the elderly. The second choice had to do with male vs. female. The fitness factor compared preferences of saving fit vs. fat. Social status condition’s two levels were high vs. low, meaning richer or poorer. Species compared between saving humans or saving pets. Three additional factors, had to do with the context. These were whether the car swerves or stays on course, whether the victims are passengers or pedestrians, and whether pedestrians are crossing legally or illegally. In our manipulation we will focus on the factors which showed the presence of some sort of preference.</p>
 <p>The original study found strong regularities, such as preferring to save more lives, humans rather than animals, and younger rather than older people. At the same time, it identified meaningful cross-country variation and cultural clustering. This led me to wonder if deviation against the majority also follows these same trends. This makes the dataset useful for testing whether disagreement follows social patterns rather than pure randomness.</p>
 <p>In this report, I focus on <strong>deviation from global majority preferences</strong> as the outcome. I test whether deviation changes across scenario types (H1), across cultural contexts (H2), and whether cultural differences depend on scenario type (H3).</p>
 <p>These hypotheses are substantively important because they test more generally whether moral disagreement is structured by social context and dilemma content. If deviation is patterned rather than random, this has implications for how societies discuss fairness, risk, and responsibility in automated systems. In other words, the question is not only what people choose, but whether disagreement itself follows social regularities.</p>
@@ -2287,17 +2288,21 @@ vertical-align: -.125em;
 <p>The transformation is done in three steps. First, I needed to filter observations so that they refered to the outcomes only. This is why I kept one observation per distinct respondent and scenario (<code>Saved == 1</code>), so each observation represents a clear decision. Second, I define a benchmark table (<code>majority_map</code>) that specifies the global-majority option for each scenario type used here (Age, Utilitarian, Species, Fitness). Third, I create a binary variable <code>against_majority</code> equal to 1 when the respondent’s choice differs from that benchmark and 0 otherwise.</p>
 <p>I then merge country-level cultural context and remove missing context labels (including blank strings, in the case of one country). This produces a clean dataset where each row can be interpreted as: “in this scenario, this respondent either followed or deviated from the global majority preference.”</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;fullRsample.rds&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load respondent-level Moral Machine data</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;fullRsample.rds&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>culture <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;cultures.csv&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Load country-to-cultural-context lookup table</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>culture <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;cultures.csv&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>majority_map <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">ScenarioTypeStrict =</span> <span class="fu">c</span>(<span class="st">&quot;Age&quot;</span>, <span class="st">&quot;Utilitarian&quot;</span>, <span class="st">&quot;Species&quot;</span>, <span class="st">&quot;Fitness&quot;</span>),</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">majority_attribute =</span> <span class="fu">c</span>(<span class="st">&quot;Young&quot;</span>, <span class="st">&quot;More&quot;</span>, <span class="st">&quot;Hoomans&quot;</span>, <span class="st">&quot;Fit&quot;</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(majority_map, <span class="at">caption =</span> <span class="st">&quot;Global-majority benchmark used to define deviation&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the global-majority option for each scenario type so that only the conditions that showed consistent majority preference are kept.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>majority_map <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">ScenarioTypeStrict =</span> <span class="fu">c</span>(<span class="st">&quot;Age&quot;</span>, <span class="st">&quot;Utilitarian&quot;</span>, <span class="st">&quot;Species&quot;</span>, <span class="st">&quot;Fitness&quot;</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">majority_attribute =</span> <span class="fu">c</span>(<span class="st">&quot;Young&quot;</span>, <span class="st">&quot;More&quot;</span>, <span class="st">&quot;Hoomans&quot;</span>, <span class="st">&quot;Fit&quot;</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(majority_map, <span class="at">caption =</span> <span class="st">&quot;Global-majority benchmark used to define deviation&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Global-majority benchmark used to define deviation</caption>
@@ -2331,31 +2336,35 @@ vertical-align: -.125em;
 <p>Attributes such as gender or social status are omitted because their effects, while present, are weak, culturally variable, and lack a consistent global majority direction, unlike the core attributes retained in the table.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>scenario_data <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ResponseID, UserID, ScenarioTypeStrict,UserCountry3) <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">sum</span>(Saved <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>  <span class="co"># exactly one chosen</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">chosen_attribute =</span> AttributeLevel[Saved <span class="sc">==</span> <span class="dv">1</span>][<span class="dv">1</span>],</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep one observation per respondent and scenario, based on the chosen option.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>scenario_data <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ResponseID, UserID, ScenarioTypeStrict,UserCountry3) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">sum</span>(Saved <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>  <span class="co"># exactly one chosen</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">chosen_attribute =</span> AttributeLevel[Saved <span class="sc">==</span> <span class="dv">1</span>][<span class="dv">1</span>],</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>scenario_flagged <span class="ot">&lt;-</span> scenario_data <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(majority_map, <span class="at">by =</span> <span class="st">&quot;ScenarioTypeStrict&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">against_majority =</span> <span class="fu">as.integer</span>(chosen_attribute <span class="sc">!=</span> majority_attribute)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(culture, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;UserCountry3&quot;</span> <span class="ot">=</span> <span class="st">&quot;countries&quot;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cultural_context =</span> categories) <span class="sc">%&gt;%</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cultural_context), <span class="sc">!</span><span class="fu">is.na</span>(ScenarioTypeStrict), <span class="sc">!</span><span class="fu">is.na</span>(against_majority))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flag whether each response deviates from the global-majority benchmark we set previously.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>scenario_flagged <span class="ot">&lt;-</span> scenario_data <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(majority_map, <span class="at">by =</span> <span class="st">&quot;ScenarioTypeStrict&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">against_majority =</span> <span class="fu">as.integer</span>(chosen_attribute <span class="sc">!=</span> majority_attribute)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(culture, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;UserCountry3&quot;</span> <span class="ot">=</span> <span class="st">&quot;countries&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">cultural_context =</span> categories) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cultural_context), <span class="sc">!</span><span class="fu">is.na</span>(ScenarioTypeStrict), <span class="sc">!</span><span class="fu">is.na</span>(against_majority))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>scenario_flagged <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">trimws</span>(cultural_context),</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;&quot;</span>),       </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;NA&quot;</span>),</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;N/A&quot;</span>)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cultural_context))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean cultural context labels since there are different values that indicate NA in the dataset</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>scenario_flagged <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">trimws</span>(cultural_context),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;&quot;</span>),       </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;NA&quot;</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">cultural_context =</span> <span class="fu">na_if</span>(cultural_context, <span class="st">&quot;N/A&quot;</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(cultural_context))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="descriptive-statistics" class="level2">
@@ -2363,15 +2372,19 @@ vertical-align: -.125em;
 <section id="scenario-level-tests-h1" class="level3">
 <h3 class="anchored" data-anchor-id="scenario-level-tests-h1">Scenario level tests (H1):</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>scenario_desc <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">divisiveness_index =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(prop_against <span class="sc">-</span> <span class="fl">0.5</span>), <span class="co"># 1=most divisive, 0=most consensual</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(divisiveness_index))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute scenario-level descriptives.</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>scenario_desc <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">divisiveness_index =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(prop_against <span class="sc">-</span> <span class="fl">0.5</span>), <span class="co"># rescales the distance from a 50/50 split to the unit interval.</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># divisiveness_index rescales how close the split is to 50/50:</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   1 = most divisive (exactly 50/50), 0 = strongest consensus.</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(divisiveness_index))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(scenario_desc, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;Scenario-type descriptives&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2415,6 +2428,7 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
+<p>The divisiveness index is defined as `1 - 2 * |prop_against - 0.5|`, which rescales the distance from a 50/50 split to the unit interval. Values closer to 1 indicate a near-even split (high disagreement); values closer to 0 indicate strong consensus. This is important because it directly quantifies how polarized each scenario type is, beyond just the raw proportion.</p>
 <p>Fitness is the most divisive scenario type (prop_against = 0.469, divisiveness_index = 0.937), meaning responses are close to a 50/50 split. Species is the least divisive (prop_against = 0.200, divisiveness_index = 0.399), indicating stronger consensus with the global majority. Age and Utilitarian are intermediate but still clearly less divisive than Fitness.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
@@ -2437,29 +2451,30 @@ vertical-align: -.125em;
 </div>
 </div>
 </div>
-<p>This graph further illustrates the distribution of against-majority answers, with species being the least divisive scenario type (20%), and fitness being the most divisive (46,9%). This shows us that there seems to be indeed variation in against-majority answers based on the scenario type.</p>
+<p>This graph further illustrates the distribution of against-majority answers, with species being the least divisive scenario type (20%), and fitness being the most divisive (46,9%). This supports the claim that disagreement varies by scenario type.</p>
 </section>
 <section id="cultural-context-tests-h2" class="level3">
 <h3 class="anchored" data-anchor-id="cultural-context-tests-h2">Cultural context tests (H2):</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>country_data <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UserCountry3, cultural_context) <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">200</span>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>culture_desc <span class="ot">&lt;-</span> country_data <span class="sc">%&gt;%</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cultural_context) <span class="sc">%&gt;%</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_countries =</span> <span class="fu">n</span>(),</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_prop_against =</span> <span class="fu">mean</span>(prop_against, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_prop_against =</span> <span class="fu">sd</span>(prop_against, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_prop_against))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate to country level so each country contributes one mean proportion.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>country_data <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UserCountry3, cultural_context) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">200</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>culture_desc <span class="ot">&lt;-</span> country_data <span class="sc">%&gt;%</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cultural_context) <span class="sc">%&gt;%</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_countries =</span> <span class="fu">n</span>(),</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_prop_against =</span> <span class="fu">mean</span>(prop_against, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_prop_against =</span> <span class="fu">sd</span>(prop_against, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mean_prop_against))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(culture_desc, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;Cultural-context descriptives&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2553,14 +2568,15 @@ vertical-align: -.125em;
 <section id="interaction-between-cultural-context-and-scenario-type-test-h3" class="level3">
 <h3 class="anchored" data-anchor-id="interaction-between-cultural-context-and-scenario-type-test-h3">Interaction between cultural context and scenario type test (H3):</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>cell_data <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UserCountry3, cultural_context, ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create country x scenario cells for H3 interaction testing.</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>cell_data <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UserCountry3, cultural_context, ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(cell_data, <span class="fu">aes</span>(<span class="at">x =</span> ScenarioTypeStrict, <span class="at">y =</span> prop_against, <span class="at">color =</span> cultural_context, <span class="at">group =</span> cultural_context)) <span class="sc">+</span></span>
@@ -2591,23 +2607,25 @@ vertical-align: -.125em;
 <p>I use three inferential tests because each hypothesis asks a different statistical question.</p>
 <ul>
 <li><strong>H1 (scenario type differences):</strong> I use a <strong>chi-square test of independence</strong> because both variables are categorical (<code>ScenarioTypeStrict</code> and binary <code>against_majority</code>). This tests whether the distribution of deviation is the same across scenario types.</li>
-<li><strong>H2 (cultural context differences):</strong> I use a <strong>weighted linear model</strong> at country level (<code>prop_against ~ cultural_context</code>, weights = <code>n</code>) because the outcome is a country-level proportion and countries contribute different sample sizes.</li>
+<li><strong>H2 (cultural context differences):</strong> I use a <strong>one-way ANOVA</strong> at country level (<code>prop_against ~ cultural_context</code>, weighted by <code>n</code>) because the outcome is a country-level proportion and the hypothesis asks whether <em>group means differ</em> across cultural contexts.</li>
 <li><strong>H3 (interaction):</strong> I fit additive and interaction linear models and compare them with <strong>ANOVA model comparison</strong>. This directly tests whether adding <code>cultural_context × ScenarioTypeStrict</code> improves fit, which corresponds to the interaction hypothesis.</li>
 </ul>
 <section id="scenario-level-tests-h1-1" class="level3">
 <h3 class="anchored" data-anchor-id="scenario-level-tests-h1-1">Scenario level tests (H1):</h3>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>scenario_desc <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">divisiveness_index =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(prop_against <span class="sc">-</span> <span class="fl">0.5</span>), <span class="co"># 1 = most divisive, 0 = strongest consensus</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(divisiveness_index))</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(scenario_desc, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;H1 descriptive: divisiveness by scenario type&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-compute scenario-level divisiveness for H1 reporting.</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>scenario_desc <span class="ot">&lt;-</span> scenario_flagged <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ScenarioTypeStrict) <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop_against =</span> <span class="fu">mean</span>(against_majority, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">divisiveness_index =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">abs</span>(prop_against <span class="sc">-</span> <span class="fl">0.5</span>), <span class="co"># 1 = most divisive, 0 = strongest consensus</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(divisiveness_index))</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(scenario_desc, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;H1 descriptive: divisiveness by scenario type&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>H1 descriptive: divisiveness by scenario type</caption>
@@ -2649,21 +2667,22 @@ vertical-align: -.125em;
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>tab_h1 <span class="ot">&lt;-</span> <span class="fu">table</span>(scenario_flagged<span class="sc">$</span>ScenarioTypeStrict, scenario_flagged<span class="sc">$</span>against_majority)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>chisq_h1 <span class="ot">&lt;-</span> <span class="fu">chisq.test</span>(tab_h1)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>h1_test <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">statistic =</span> <span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>statistic),</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">df =</span> <span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>parameter),</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_value_raw =</span> chisq_h1<span class="sc">$</span>p.value,</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_value_display =</span> <span class="fu">format</span>(chisq_h1<span class="sc">$</span>p.value, <span class="at">scientific =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cramer_v =</span> <span class="fu">sqrt</span>(<span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>statistic) <span class="sc">/</span> (<span class="fu">sum</span>(tab_h1) <span class="sc">*</span> (<span class="fu">min</span>(<span class="fu">dim</span>(tab_h1)) <span class="sc">-</span> <span class="dv">1</span>)))</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>h1_table <span class="ot">&lt;-</span> <span class="fu">as.data.frame.matrix</span>(tab_h1)</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>h1_table <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">rownames_to_column</span>(h1_table, <span class="at">var =</span> <span class="st">&quot;ScenarioTypeStrict&quot;</span>)</span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h1_table, <span class="at">caption =</span> <span class="st">&quot;H1 contingency table: Scenario Type × Against Majority&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># H1 chi-square test of independence</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>tab_h1 <span class="ot">&lt;-</span> <span class="fu">table</span>(scenario_flagged<span class="sc">$</span>ScenarioTypeStrict, scenario_flagged<span class="sc">$</span>against_majority)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>chisq_h1 <span class="ot">&lt;-</span> <span class="fu">chisq.test</span>(tab_h1)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>h1_test <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">statistic =</span> <span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>statistic),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">df =</span> <span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>parameter),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_value_raw =</span> chisq_h1<span class="sc">$</span>p.value,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_value_display =</span> <span class="fu">format</span>(chisq_h1<span class="sc">$</span>p.value, <span class="at">scientific =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cramer_v =</span> <span class="fu">sqrt</span>(<span class="fu">as.numeric</span>(chisq_h1<span class="sc">$</span>statistic) <span class="sc">/</span> (<span class="fu">sum</span>(tab_h1) <span class="sc">*</span> (<span class="fu">min</span>(<span class="fu">dim</span>(tab_h1)) <span class="sc">-</span> <span class="dv">1</span>)))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>h1_table <span class="ot">&lt;-</span> <span class="fu">as.data.frame.matrix</span>(tab_h1)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>h1_table <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">rownames_to_column</span>(h1_table, <span class="at">var =</span> <span class="st">&quot;ScenarioTypeStrict&quot;</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h1_table, <span class="at">caption =</span> <span class="st">&quot;H1 contingency table: Scenario Type × Against Majority&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>H1 contingency table: Scenario Type × Against Majority</caption>
@@ -2765,11 +2784,12 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
-<p>The chi-square assumptions are satisfied. The minimum expected cell count is far above 5, and there are no expected counts below 5 or 1. Therefore, the chi-square approximation is appropriate and the H1 inference is valid.</p>
+<p>Explain why we need an assumption check here The assumption check process is: (1) compute expected cell counts under independence; (2) confirm expected counts are not too small; (3) proceed with the chi-square approximation only if those thresholds are met. In our case, the minimum expected cell count is far above 5, and there are no expected counts below 5 or 1. Therefore, the chi-square approximation is appropriate and the H1 inference is valid.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>h1_stdres <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(chisq_h1<span class="sc">$</span>stdres)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>h1_stdres<span class="sc">$</span>ScenarioTypeStrict <span class="ot">&lt;-</span> <span class="fu">rownames</span>(chisq_h1<span class="sc">$</span>stdres)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h1_stdres, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;H1 standardized residuals (cell-level deviations)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standardized residuals highlight which cells deviate most from independence.</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>h1_stdres <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(chisq_h1<span class="sc">$</span>stdres)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>h1_stdres<span class="sc">$</span>ScenarioTypeStrict <span class="ot">&lt;-</span> <span class="fu">rownames</span>(chisq_h1<span class="sc">$</span>stdres)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h1_stdres, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">caption =</span> <span class="st">&quot;H1 standardized residuals (cell-level deviations)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>H1 standardized residuals (cell-level deviations)</caption>
@@ -2834,7 +2854,7 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
-<p>Standardized residuals show which cells contribute most to the association. Larger absolute residuals (Fitness) indicate scenario-type/response combinations that occur more (or less) often than expected under independence.</p>
+<p>Standardized residuals show which cells contribute most to the association. Larger absolute residuals (Fitness) indicate scenario-type/response combinations that occur more (or less) often than expected under independence. They are essentially z-scores for each cell: <code>(observed − expected) / SD(expected)</code>. Large absolute values indicate scenario-type/response combinations that occur much more (positive) or much less (negative) than expected under independence.</p>
 </section>
 <section id="cultural-context-tests-h2-1" class="level3">
 <h3 class="anchored" data-anchor-id="cultural-context-tests-h2-1">Cultural context tests (H2):</h3>
@@ -2848,118 +2868,55 @@ vertical-align: -.125em;
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
 <span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">200</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>For H2, the model estimates how average country-level deviation changes across cultural contexts. The coefficient for each context is the difference from the omitted reference context. Using weights (<code>n</code>) gives more influence to estimates based on larger country samples.</p>
+<p>For H2, I test whether the <strong>mean</strong> country-level deviation differs across cultural contexts. A one-way ANOVA answers this directly. I use weights (<code>n</code>) so that countries with larger samples contribute proportionally more information. I also set the reference level to “Catholic” so the intercept has a clear baseline interpretation.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fit_h2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(prop_against <span class="sc">~</span> cultural_context, <span class="at">data =</span> country_data, <span class="at">weights =</span> n)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>h2_coefs <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(fit_h2, <span class="at">conf.int =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>h2_glance <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">glance</span>(fit_h2) <span class="sc">%&gt;%</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_squared =</span> r.squared,</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">adj_r_squared =</span> adj.r.squared,</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">sigma =</span> sigma,</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">statistic_F =</span> statistic,</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value_model =</span> p.value,</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">df_model =</span> df,</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_obs =</span> nobs</span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h2_coefs, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H2 linear model coefficients&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># One-way ANOVA (weighted by country sample size)</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>fit_h2 <span class="ot">&lt;-</span> <span class="fu">aov</span>(prop_against <span class="sc">~</span> cultural_context, <span class="at">data =</span> country_data, <span class="at">weights =</span> n)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>h2_anova <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(fit_h2)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit stats from lm (same model)</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>fit_h2_lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(prop_against <span class="sc">~</span> cultural_context, <span class="at">data =</span> country_data, <span class="at">weights =</span> n)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>h2_glance <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">glance</span>(fit_h2_lm) <span class="sc">%&gt;%</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_squared =</span> r.squared,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">adj_r_squared =</span> adj.r.squared,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sigma =</span> sigma,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">statistic_F =</span> statistic,</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value_model =</span> p.value,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">df_model =</span> df,</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_obs =</span> nobs</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h2_anova, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H2 ANOVA table: cultural context differences&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>H2 linear model coefficients</caption>
-<colgroup>
-<col style="width: 34%">
-<col style="width: 10%">
-<col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 9%">
-<col style="width: 10%">
-<col style="width: 11%">
-</colgroup>
+<caption>H2 ANOVA table: cultural context differences</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">term</th>
-<th style="text-align: right;">estimate</th>
-<th style="text-align: right;">std.error</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">sumsq</th>
+<th style="text-align: right;">meansq</th>
 <th style="text-align: right;">statistic</th>
 <th style="text-align: right;">p.value</th>
-<th style="text-align: right;">conf.low</th>
-<th style="text-align: right;">conf.high</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">0.2712</td>
-<td style="text-align: right;">0.0066</td>
-<td style="text-align: right;">40.8820</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.2575</td>
-<td style="text-align: right;">0.2849</td>
+<td style="text-align: left;">cultural_context</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">7.8353</td>
+<td style="text-align: right;">1.1193</td>
+<td style="text-align: right;">3.5319</td>
+<td style="text-align: right;">0.0101</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">cultural_contextConfucian</td>
-<td style="text-align: right;">0.0559</td>
-<td style="text-align: right;">0.0224</td>
-<td style="text-align: right;">2.4972</td>
-<td style="text-align: right;">0.0201</td>
-<td style="text-align: right;">0.0096</td>
-<td style="text-align: right;">0.1022</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">cultural_contextEnglish</td>
-<td style="text-align: right;">0.0123</td>
-<td style="text-align: right;">0.0083</td>
-<td style="text-align: right;">1.4871</td>
-<td style="text-align: right;">0.1506</td>
-<td style="text-align: right;">-0.0048</td>
-<td style="text-align: right;">0.0294</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">cultural_contextIslamic</td>
-<td style="text-align: right;">0.0138</td>
-<td style="text-align: right;">0.0205</td>
-<td style="text-align: right;">0.6742</td>
-<td style="text-align: right;">0.5069</td>
-<td style="text-align: right;">-0.0286</td>
-<td style="text-align: right;">0.0562</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">cultural_contextLatinAmerica</td>
-<td style="text-align: right;">0.0547</td>
-<td style="text-align: right;">0.0131</td>
-<td style="text-align: right;">4.1643</td>
-<td style="text-align: right;">0.0004</td>
-<td style="text-align: right;">0.0275</td>
-<td style="text-align: right;">0.0819</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">cultural_contextOrthodox</td>
-<td style="text-align: right;">0.0226</td>
-<td style="text-align: right;">0.0152</td>
-<td style="text-align: right;">1.4869</td>
-<td style="text-align: right;">0.1506</td>
-<td style="text-align: right;">-0.0088</td>
-<td style="text-align: right;">0.0539</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">cultural_contextProtestant</td>
-<td style="text-align: right;">0.0216</td>
-<td style="text-align: right;">0.0108</td>
-<td style="text-align: right;">2.0064</td>
-<td style="text-align: right;">0.0567</td>
-<td style="text-align: right;">-0.0007</td>
-<td style="text-align: right;">0.0439</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">cultural_contextSouthAsia</td>
-<td style="text-align: right;">-0.0414</td>
-<td style="text-align: right;">0.0364</td>
-<td style="text-align: right;">-1.1380</td>
-<td style="text-align: right;">0.2669</td>
-<td style="text-align: right;">-0.1166</td>
-<td style="text-align: right;">0.0338</td>
+<td style="text-align: left;">Residuals</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">7.2891</td>
+<td style="text-align: right;">0.3169</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 </tbody>
 </table>
@@ -3004,14 +2961,16 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
-<p>With R² = 0.518 and Adj. R² = 0.371, cultural context explains a moderate share of cross-country variation in deviation. The gap between R² and adjusted R² suggests caution due to limited sample size (31 countries) relative to the number of levels.</p>
-<p>The intercept is 0.271, which is the estimated mean proportion of deviation from the global majority.</p>
-<p>Because the overall model is significant, I conclude that cultural context is associated with different average deviation levels. This supports <strong>H2</strong> at the model level.</p>
-<p>At the same time, not all pairwise context coefficients are significant (e.g., English, Islamic, Orthodox, SouthAsia), so the evidence suggests patterned but moderate cross-context differences rather than a sharp separation of all groups.</p>
+<p>With R² = 0.518 and Adj. R² = 0.371, the model fit is moderate at the country level, so cultural context accounts for a meaningful (but not exhaustive) share of cross‑country variation in deviation. The gap between R² and adjusted R² suggests caution because the sample is modest (31 countries) relative to the number of cultural categories.</p>
+<p>The intercept is 0.271. It represents the <strong>mean deviation</strong> for the baseline category (Catholic). All other coefficients are differences <strong>relative to Catholic</strong>, so each context effect should be interpreted as a deviation from the Catholic mean.</p>
+<p>The ANOVA F‑test is significant (F = 3.5319, p = 0.0101), so we conclude that cultural context is associated with different average deviation levels. This supports <strong>H2</strong> at the model level.</p>
+<p>At the same time, not all pairwise context coefficients are significant (e.g., English, Islamic, Orthodox, SouthAsia), so the evidence suggests patterned but moderate cross‑context differences rather than a sharp separation of all groups.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># H2 diagnostics (linearity, normality, homoskedasticity, influence)</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_h2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># H2 ANOVA assumption checks</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) Diagnostic plots: residuals vs fitted, QQ plot, scale-location, leverage</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">2</span>))</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fit_h2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -3021,25 +2980,29 @@ vertical-align: -.125em;
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>))</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>h2_diag <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">check =</span> <span class="fu">c</span>(</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Shapiro-Wilk p-value (residual normality)&quot;</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Breusch-Pagan p-value (homoskedasticity)&quot;</span>,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Max Cook&#39;s distance&quot;</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">shapiro.test</span>(<span class="fu">rstandard</span>(fit_h2))<span class="sc">$</span>p.value,</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    lmtest<span class="sc">::</span><span class="fu">bptest</span>(fit_h2)<span class="sc">$</span>p.value,</span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">max</span>(<span class="fu">cooks.distance</span>(fit_h2))</span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>These diagnostics test whether linear-model assumptions are reasonable. The residual plots are used to inspect linearity and constant variance. The model is usable for inference, but interpretation remains cautious.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h2_diag, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H2 linear-model diagnostics&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) Normality of residuals (ANOVA assumes normal residuals)</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>shapiro_p <span class="ot">&lt;-</span> <span class="fu">shapiro.test</span>(<span class="fu">rstandard</span>(fit_h2))<span class="sc">$</span>p.value</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 3) Homogeneity of variance across groups (i&#39;m using levene because not all countries have 2 or more observations)</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>levene_p <span class="ot">&lt;-</span> car<span class="sc">::</span><span class="fu">leveneTest</span>(prop_against <span class="sc">~</span> cultural_context, <span class="at">data =</span> country_data)<span class="sc">$</span><span class="st">`</span><span class="at">Pr(&gt;F)</span><span class="st">`</span>[<span class="dv">1</span>]</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 4) Influence check (check if a few countries dominate the result)</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>max_cooks <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">cooks.distance</span>(fit_h2))</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>h2_diag <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">check =</span> <span class="fu">c</span>(</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Shapiro-Wilk p-value (residual normality)&quot;</span>,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Levene p-value (homogeneity of variance)&quot;</span>,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Max Cook&#39;s distance&quot;</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(shapiro_p, levene_p, max_cooks)</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h2_diag, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H2 ANOVA diagnostics&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>H2 linear-model diagnostics</caption>
+<caption>H2 ANOVA diagnostics</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">check</th>
@@ -3052,8 +3015,8 @@ vertical-align: -.125em;
 <td style="text-align: right;">0.3279</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Breusch-Pagan p-value (homoskedasticity)</td>
-<td style="text-align: right;">0.0000</td>
+<td style="text-align: left;">Levene p-value (homogeneity of variance)</td>
+<td style="text-align: right;">0.7764</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Max Cook’s distance</td>
@@ -3063,7 +3026,36 @@ vertical-align: -.125em;
 </table>
 </div>
 </div>
-<p>In the same line of testing the model’s assumptions, the Shapiro-Wilk test assesses residual normality; the Breusch-Pagan test assesses homoskedasticity; and Cook’s distance checks whether a few countries dominate results. Because homoskedasticity was violated (Breusch-Pagan p &lt; .05), p-values from the linear model should be interpreted cautiously; results are treated as indicative rather than definitive.</p>
+<p>These diagnostics test whether ANOVA assumptions are reasonable. The process is: (1) visually inspect residual plots for non-linearity and unequal variance, (2) test residual normality (Shapiro-Wilk), (3) test homogeneity of variance across groups (Levene), and (4) check influence (Cook’s distance).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(h2_diag, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">&quot;H2 ANOVA diagnostics&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>H2 ANOVA diagnostics</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">check</th>
+<th style="text-align: right;">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Shapiro-Wilk p-value (residual normality)</td>
+<td style="text-align: right;">0.3279</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Levene p-value (homogeneity of variance)</td>
+<td style="text-align: right;">0.7764</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Max Cook’s distance</td>
+<td style="text-align: right;">NaN</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>In the same line of testing the ANOVA assumptions, the Shapiro–Wilk test assesses residual normality and here it is satisfied because the p-value is above .05. Levene’s test assesses homogeneity of variance across cultural contexts and is satisfied because its p-value is above .05. Cook’s distance checks whether a few countries dominate results; the maximum value is small (well below conventional cutoffs like 1), so no single country appears overly influential. With these checks satisfied, the ANOVA p-values are reasonably interpretable.</p>
 </section>
 <section id="interaction-between-cultural-context-and-scenario-type-tests-h3" class="level3">
 <h3 class="anchored" data-anchor-id="interaction-between-cultural-context-and-scenario-type-tests-h3">Interaction between cultural context and scenario type tests (H3):</h3>
@@ -3517,7 +3509,7 @@ vertical-align: -.125em;
 <h1>Conclusion</h1>
 <p>This report tested whether deviation from global majority moral choices is structured by scenario type, cultural context, and their interaction.</p>
 <p>For H1, the chi-square test found a strong association between scenario type and against-majority responses (very small p-value, effectively p &lt; 0.001; non-trivial Cramer’s V). Practically, some dilemmas are much more divisive than others: in this sample, fitness scenarios are closest to split opinion, while species scenarios show stronger consensus.</p>
-<p>For H2, the weighted country-level linear model was significant overall (p = 0.010; R² ≈ 0.52). This means cultural context is associated with different average levels of deviation from global majority choices. Some contexts have higher or lower deviation, although not every pairwise contrast is statistically significant.</p>
+<p>For H2, the weighted country-level ANOVA showed moderate model fit (p = 0.010; R² ≈ 0.52). This means cultural context is associated with different average levels of deviation from global majority choices. Some contexts have higher or lower deviation, although not every pairwise contrast is statistically significant.</p>
 <p>For H3, the interaction model significantly improved fit over the additive model (ANOVA comparison p = 0.001). This means cultural differences are scenario-dependent rather than uniform across all dilemma types.</p>
 <p>Overall, the findings support all three hypotheses. The broader implication is that when it comes to moral deviation, both the type of moral dilemma and social context matter, and they matter together.</p>
 <p>Main limitations are (1) aggregation at country/context level may hide within-country variation, (2) some cultural categories contain few countries, and (3) linear-model assumptions are approximations for proportion outcomes. Future research should use individual-level multilevel models and include additional scenario dimensions to test robustness.</p>
